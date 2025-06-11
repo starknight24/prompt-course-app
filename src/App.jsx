@@ -4,6 +4,7 @@ import Login from "./components/Login";
 import SignUp from "./components/SignUp";
 import Dashboard from "./components/Dashboard";
 import PrivateRoute from "./components/PrivateRoute";
+import LessonPage from "./components/LessonPage"; 
 
 export default function App() {
   return (
@@ -17,6 +18,14 @@ export default function App() {
           element={
             <PrivateRoute>
               <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/lesson/:lessonId"                     
+          element={
+            <PrivateRoute>
+              <LessonPage />
             </PrivateRoute>
           }
         />

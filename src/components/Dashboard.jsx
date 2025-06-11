@@ -2,6 +2,7 @@ import { auth } from "../firebase";
 import { logOut } from "../firebaseAuth";
 import { useNavigate } from "react-router-dom";
 import useLessons from "../hooks/useLessons";
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -30,7 +31,9 @@ export default function Dashboard() {
         <ul className="space-y-4">
           {lessons.map((lesson) => (
             <li key={lesson.id} className="border p-4 rounded shadow">
-              <h4 className="text-lg font-bold">{lesson.title}</h4>
+              <Link to={`/lesson/${lesson.id}`}>
+                <h4 className="text-lg font-bold hover:underline">{lesson.title}</h4>
+              </Link>
               <p className="text-sm text-gray-600">{lesson.description}</p>
             </li>
           ))}
