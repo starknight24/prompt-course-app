@@ -1,7 +1,14 @@
 import { useParams } from "react-router-dom";
-import { doc, getDoc, collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
 import { useEffect, useState } from "react";
+import { auth, db } from "../firebase";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  collection,
+  getDocs,
+} from "firebase/firestore";
 
 export default function LessonPage() {
   const { lessonId } = useParams();
@@ -26,6 +33,32 @@ export default function LessonPage() {
     fetchLesson();
   }, [lessonId]);
 
+  const handleAnswer = async (task, selectedIndex) => {
+    const user = auth.currentUser;
+    if (!user) return;
+  
+    const taskId = task.id;
+    const correct = selectedIndex === task.correct_answer;
+  
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+  
+    if (!userSnap.exists()) {
+      await setDoc(userRef, { taskHistory: {} }); // initialize user if missing
+    }
+  
+    const updatePath = `taskHistory.${taskId}`;
+    await updateDoc(userRef, {
+      [updatePath]: {
+        correct,
+        attempts: (userSnap.data()?.taskHistory?.[taskId]?.attempts || 0) + 1,
+      },
+    });
+  
+    alert(correct ? "✅ Correct!" : "❌ Try Again");
+  };
+  
+
   if (loading) return <p>Loading lesson...</p>;
   if (!lesson) return <p>Lesson not found</p>;
 
@@ -42,8 +75,8 @@ export default function LessonPage() {
             {task.options?.map((option, idx) => (
               <button
                 key={idx}
+                onClick={() => handleAnswer(task, idx)}
                 className="block mt-2 border p-2 rounded hover:bg-blue-100"
-                onClick={() => alert(idx === task.correct_answer ? "✅ Correct!" : "❌ Try Again")}
               >
                 {option}
               </button>
