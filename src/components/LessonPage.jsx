@@ -65,8 +65,9 @@ export default function LessonPage() {
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">{lesson.title}</h1>
-      <p className="text-gray-700">{lesson.content}</p>
-
+      <p className="text-gray-700 whitespace-pre-line text-left">
+        {lesson.content}
+      </p>
       <h2 className="text-xl mt-6 font-semibold">🧠 Tasks</h2>
       <ul className="space-y-4">
         {tasks.map(task => (
