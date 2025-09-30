@@ -9,8 +9,6 @@ Built with a modern full-stack architecture using **React**, **Firebase**, **Tai
 ## 🚀 Live Demo
 
 🌐 [Visit the app](https://prompt-engineering-course.web.app) — *(Coming Soon)*  
-🎥 [Demo video / walkthrough](#) — *(Optional)*
-
 ---
 
 ## 🛠️ Tech Stack
