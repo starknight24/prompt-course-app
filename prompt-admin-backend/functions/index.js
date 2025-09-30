@@ -32,6 +32,22 @@ app.post("/admin/lessons", async (req, res) => {
   }
 });
 
+app.get("/lessons", async (req, res) => {
+  try {
+    const snapshot = await db.collection("lessons").orderBy("createdAt", "desc").get();
+
+    const lessons = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    res.status(200).send(lessons);
+  } catch (err) {
+    console.error("Error fetching lessons:", err);
+    res.status(500).send({ error: err.message });
+  }
+});
+
 app.all("*", (req, res) => {
     console.log("🔥 Unexpected request method:", req.method, req.path);
     res.status(404).send("Route not found");
