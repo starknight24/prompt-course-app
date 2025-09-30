@@ -41,6 +41,6 @@ Built with a modern full-stack architecture using **React**, **Firebase**, **Tai
 
 ---
 
-## 📁 Project Structure
+
 
 
