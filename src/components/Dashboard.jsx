@@ -1,22 +1,34 @@
-import { auth } from "../firebase";
-import { logOut } from "../firebaseAuth";
-import { useNavigate } from "react-router-dom";
-import useLessons from "../hooks/useLessons";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useUser } from "../context/UserContext";
+import { useProgress } from "../context/ProgressContext";
+import { getStatsOverview } from "../api/progress";
+import { getLessons } from "../api/catalog";
+import { LevelBadge, StatusBadge } from "./ui/Badge";
+import LoadingSpinner from "./ui/LoadingSpinner";
+import { BookOpenIcon, BookmarkIcon, FireIcon, Square3Stack3DIcon, ArrowRightIcon, CheckCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const { lessons, loading } = useLessons();
+  const { user, profile } = useUser();
+  const { progressMap, bookmarkedLessons, summary } = useProgress();
+  const [stats, setStats] = useState(null);
+  const [recentLessons, setRecentLessons] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleLogout = async () => {
-    await logOut();
-    navigate("/login");
-  };
-
-  const getUserInitials = (email) => {
-    if (!email) return "U";
-    return email.charAt(0).toUpperCase();
-  };
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [statsRes, lessonsRes] = await Promise.all([getStatsOverview(), getLessons({ limit: 6 })]);
+        setStats(statsRes);
+        setRecentLessons(lessonsRes.data || []);
+      } catch (err) {
+        console.error("Dashboard load error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -25,232 +37,120 @@ export default function Dashboard() {
     return "Good evening";
   };
 
-  const totalLessons = lessons.length;
-  const progressPercent = totalLessons ? Math.min(totalLessons * 12, 100) : 8;
-  const recommendedLessons = lessons.slice(0, 3);
+  if (loading) return <LoadingSpinner size="lg" text="Loading dashboard..." />;
+
+  const statCards = [
+    { label: "Total Modules", value: stats?.totalModules || 0, icon: Square3Stack3DIcon, color: "from-blue-500 to-blue-600" },
+    { label: "Total Lessons", value: stats?.totalLessons || 0, icon: BookOpenIcon, color: "from-indigo-500 to-indigo-600" },
+    { label: "Completed", value: stats?.userCompleted || 0, icon: CheckCircleIcon, color: "from-emerald-500 to-emerald-600" },
+    { label: "In Progress", value: stats?.userInProgress || 0, icon: ClockIcon, color: "from-amber-500 to-amber-600" },
+    { label: "Bookmarks", value: stats?.userBookmarks || 0, icon: BookmarkIcon, color: "from-rose-500 to-rose-600" },
+    { label: "Streak", value: (stats?.streakDays || 0) + "d", icon: FireIcon, color: "from-orange-500 to-orange-600" },
+  ];
+
+  const inProgressLessons = Object.values(progressMap).filter((p) => p.status === "in_progress").slice(0, 4);
+  const completedLessons = Object.values(progressMap).filter((p) => p.status === "completed").slice(0, 4);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(30,64,175,0.22),_transparent_55%)]" />
-      <div className="absolute -top-36 -left-24 h-96 w-96 rounded-full bg-blue-500/40 blur-3xl" />
-      <div className="absolute bottom-0 right-0 h-[28rem] w-[28rem] translate-x-1/3 translate-y-1/3 rounded-full bg-indigo-500/30 blur-3xl" />
-
-      <div className="relative z-10 flex min-h-screen flex-col">
-        <nav className="border-b border-white/10 bg-slate-950/60 px-6 py-5 backdrop-blur-xl">
-          <div className="mx-auto flex w-full max-w-7xl items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-lg font-semibold text-white shadow-lg shadow-blue-500/40">
-                ⚡
-              </span>
-              <div>
-                <h1 className="text-xl font-semibold">Prompt Engineering Studio</h1>
-                <p className="text-xs uppercase tracking-[0.3em] text-blue-200/70">Dashboard</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4 text-sm text-slate-200/80">
-              <span>{getGreeting()}, {auth.currentUser?.email?.split('@')[0]}</span>
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center justify-center rounded-full border border-red-500/30 bg-red-500/20 px-4 py-2 font-medium text-red-100 transition-transform duration-200 hover:-translate-y-0.5 hover:bg-red-500/30"
-              >
-                Sign out
-              </button>
-            </div>
-          </div>
-        </nav>
-
-        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-6 pb-12 pt-10 lg:flex-row">
-          <aside className="order-2 w-full space-y-6 lg:order-1 lg:w-80">
-            <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-blue-500/20 backdrop-blur-xl">
-              <div className="mb-6 flex items-center space-x-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 text-xl font-semibold text-white shadow-lg shadow-blue-500/40">
-                  {getUserInitials(auth.currentUser?.email)}
-                </div>
-                <div>
-                  <p className="text-sm text-blue-100/80">Creator</p>
-                  <h3 className="text-lg font-semibold text-white">
-                    {auth.currentUser?.email?.split('@')[0] || "Learner"}
-                  </h3>
-                  <p className="text-xs text-slate-200/80">{auth.currentUser?.email}</p>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs uppercase tracking-[0.25em] text-blue-100/70">
-                  <span>Progress</span>
-                  <span>{totalLessons} lessons</span>
-                </div>
-                <div className="h-3 w-full overflow-hidden rounded-full bg-slate-800/70">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-blue-500 via-sky-500 to-indigo-500 transition-all duration-500"
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </div>
-                <div className="flex items-center justify-between text-xs text-slate-200/80">
-                  <span>Daily streak</span>
-                  <span className="inline-flex items-center space-x-1 rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-1 text-[0.65rem] uppercase tracking-[0.2em] text-blue-100">
-                    <span>🔥</span>
-                    <span>1 day</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-indigo-500/10 backdrop-blur-xl">
-              <h4 className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-200/80">
-                Quick stats
-              </h4>
-              <div className="mt-5 space-y-4 text-sm">
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                  <span className="text-slate-200/80">Total lessons</span>
-                  <span className="text-white font-semibold">{totalLessons}</span>
-                </div>
-                <div className="flex items-center justify-between rounded-2xl border border-white/5 bg-gradient-to-r from-blue-500/20 via-indigo-500/10 to-transparent px-4 py-3 text-slate-200/80">
-                  <span>In progress</span>
-                  <span className="text-blue-200 font-semibold">1</span>
-                </div>
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-slate-200/80">
-                  <span>Completed</span>
-                  <span className="text-green-200 font-semibold">0</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-blue-500/20 bg-blue-500/10 p-6 shadow-2xl shadow-blue-500/30 backdrop-blur-xl">
-              <h4 className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-100">
-                Focus tip
-              </h4>
-              <p className="mt-4 text-sm text-blue-50/90">
-                Schedule a 25 minute sprint to review yesterday's prompts, then experiment with a fresh tone or persona.
-              </p>
-            </div>
-          </aside>
-
-          <main className="order-1 flex-1 space-y-8 lg:order-2">
-            <section className="overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-br from-blue-500/20 via-indigo-500/10 to-transparent p-8 shadow-2xl shadow-blue-500/30 backdrop-blur-xl">
-              <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-blue-100/80">
-                    {getGreeting()}, {auth.currentUser?.email?.split('@')[0] || 'Creator'}
-                  </p>
-                  <h2 className="mt-4 text-3xl font-semibold leading-tight text-white">
-                    Let’s build sharper prompts today.
-                  </h2>
-                  <p className="mt-3 max-w-xl text-sm text-blue-100/80">
-                    Continue your journey with curated lessons and hands-on tasks designed to make your AI workflows more intentional and reliable.
-                  </p>
-                </div>
-                <div className="space-y-3 rounded-2xl border border-white/10 bg-white/10 p-5 text-sm text-white shadow-inner">
-                  <div className="flex items-center justify-between">
-                    <span>Next milestone</span>
-                    <span className="rounded-full bg-white/20 px-3 py-1 text-xs uppercase tracking-[0.25em] text-white">
-                      Strategy Lab
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-blue-100/80">
-                    <span>Lessons unlocked</span>
-                    <span className="text-white font-semibold">{totalLessons}</span>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section>
-              <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <h3 className="text-xl font-semibold text-white">Available lessons</h3>
-                  <p className="text-sm text-slate-300/90">
-                    {totalLessons} lesson{totalLessons === 1 ? '' : 's'} ready for your next deep dive.
-                  </p>
-                </div>
-                <div className="inline-flex items-center space-x-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-200/80">
-                  <span>📚</span>
-                  <span>Learning path</span>
-                </div>
-              </div>
-
-              {loading ? (
-                <div className="flex flex-col items-center justify-center space-y-3 rounded-3xl border border-white/10 bg-white/5 py-16 shadow-2xl shadow-blue-500/10">
-                  <div className="h-12 w-12 animate-spin rounded-full border-2 border-blue-400 border-t-transparent" />
-                  <span className="text-sm text-slate-300/90">Loading lessons...</span>
-                </div>
-              ) : totalLessons === 0 ? (
-                <div className="rounded-3xl border border-white/10 bg-white/5 p-12 text-center shadow-2xl shadow-blue-500/10">
-                  <p className="text-lg text-slate-200/80">No lessons available yet.</p>
-                  <p className="mt-2 text-sm text-slate-300/70">
-                    Check back soon for new drops crafted by the course team.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                  {lessons.map((lesson, index) => (
-                    <Link
-                      key={lesson.id}
-                      to={`/lesson/${lesson.id}`}
-                      className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-blue-500/10 backdrop-blur-lg transition-transform duration-300 hover:-translate-y-1 hover:border-blue-400/40"
-                    >
-                      <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                        <div className="absolute -top-20 right-0 h-40 w-40 rounded-full bg-gradient-to-br from-blue-500/20 to-indigo-500/20 blur-2xl" />
-                      </div>
-                      <div className="relative flex items-center justify-between">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 text-lg font-semibold text-white shadow-lg shadow-blue-500/40">
-                          {index + 1}
-                        </div>
-                        <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.25em] text-slate-200/80">
-                          Lesson {lesson.order || index + 1}
-                        </span>
-                      </div>
-                      <h4 className="relative mt-6 text-xl font-semibold text-white transition-colors duration-300 group-hover:text-blue-100">
-                        {lesson.title}
-                      </h4>
-                      <p className="relative mt-3 text-sm leading-relaxed text-slate-200/80 line-clamp-3">
-                        {lesson.description}
-                      </p>
-                      <div className="relative mt-6 flex items-center justify-between text-xs text-blue-100/80">
-                        <span className="inline-flex items-center space-x-2">
-                          <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                          <span>Available now</span>
-                        </span>
-                        <span className="inline-flex items-center space-x-2 text-blue-100">
-                          <span>Start lesson</span>
-                          <span className="transition-transform group-hover:translate-x-1">→</span>
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            {recommendedLessons.length > 0 && (
-              <section className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-indigo-500/10 backdrop-blur-lg">
-                <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">Recommended next steps</h3>
-                    <p className="text-sm text-slate-300/80">
-                      A quick playlist based on the latest modules.
-                    </p>
-                  </div>
-                  <span className="inline-flex items-center space-x-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.3em] text-blue-100/80">
-                    <span>✨</span>
-                    <span>Fresh drops</span>
-                  </span>
-                </div>
-                <div className="grid gap-4 md:grid-cols-3">
-                  {recommendedLessons.map((item, idx) => (
-                    <div key={item.id} className="rounded-2xl border border-white/10 bg-slate-950/60 p-5 text-sm text-slate-200/80">
-                      <span className="text-xs uppercase tracking-[0.3em] text-blue-100/70">
-                        Step {idx + 1}
-                      </span>
-                      <p className="mt-3 text-base font-semibold text-white">{item.title}</p>
-                      <p className="mt-2 line-clamp-3 text-xs text-slate-300/80">{item.description}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-          </main>
+    <div className="space-y-8">
+      <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 p-8 text-white shadow-xl">
+        <p className="text-sm font-medium text-blue-100">{getGreeting()}, {profile?.displayName || user?.email?.split("@")[0] || "Learner"}</p>
+        <h1 className="mt-2 text-2xl font-bold lg:text-3xl">Let&apos;s build sharper prompts today.</h1>
+        <p className="mt-2 max-w-2xl text-sm text-blue-100/90">Continue your journey with curated lessons and hands-on tasks.</p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link to="/lessons" className="inline-flex items-center gap-2 rounded-lg bg-white/20 px-4 py-2 text-sm font-medium backdrop-blur transition hover:bg-white/30">Browse Lessons <ArrowRightIcon className="h-4 w-4" /></Link>
+          <Link to="/modules" className="inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur transition hover:bg-white/20">View Modules</Link>
         </div>
       </div>
+
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        {statCards.map((s) => (
+          <div key={s.label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+            <div className={"inline-flex rounded-lg bg-gradient-to-br p-2 text-white " + s.color}><s.icon className="h-5 w-5" /></div>
+            <p className="mt-3 text-2xl font-bold text-slate-900 dark:text-white">{s.value}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-2">
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">In Progress</h2>
+            <Link to="/lessons" className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400">View all</Link>
+          </div>
+          {inProgressLessons.length === 0 ? (
+            <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 text-center dark:border-slate-700">
+              <ClockIcon className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">No lessons in progress yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">{inProgressLessons.map((p) => (
+              <Link key={p.lessonId} to={"/lessons/" + p.lessonId} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 transition hover:border-blue-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-900">
+                <div><p className="text-sm font-medium text-slate-900 dark:text-white">{p.lessonId}</p><StatusBadge status="in_progress" /></div>
+                <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{p.percent || 0}%</span>
+              </Link>
+            ))}</div>
+          )}
+        </section>
+
+        <section>
+          <div className="mb-4"><h2 className="text-lg font-semibold text-slate-900 dark:text-white">Recently Completed</h2></div>
+          {completedLessons.length === 0 ? (
+            <div className="rounded-xl border-2 border-dashed border-slate-200 p-8 text-center dark:border-slate-700">
+              <CheckCircleIcon className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Complete your first lesson to see it here.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">{completedLessons.map((p) => (
+              <Link key={p.lessonId} to={"/lessons/" + p.lessonId} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900">
+                <div><p className="text-sm font-medium text-slate-900 dark:text-white">{p.lessonId}</p><StatusBadge status="completed" /></div>
+                <CheckCircleIcon className="h-5 w-5 text-emerald-500" />
+              </Link>
+            ))}</div>
+          )}
+        </section>
+      </div>
+
+      {bookmarkedLessons.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white"><BookmarkIcon className="mr-2 inline h-5 w-5 text-rose-500" />Bookmarked</h2>
+            <Link to="/bookmarks" className="text-sm font-medium text-blue-600 dark:text-blue-400">View all</Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {bookmarkedLessons.slice(0, 4).map((p) => (
+              <Link key={p.lessonId} to={"/lessons/" + p.lessonId} className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-rose-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-900">
+                <BookmarkIcon className="h-5 w-5 text-rose-500" />
+                <p className="mt-2 text-sm font-medium text-slate-900 dark:text-white">{p.lessonId}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Recent Lessons</h2>
+          <Link to="/lessons" className="text-sm font-medium text-blue-600 dark:text-blue-400">View all</Link>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {recentLessons.map((lesson) => (
+            <Link key={lesson.id} to={"/lessons/" + lesson.id} className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-600">
+              <div className="flex items-center justify-between">
+                <LevelBadge level={lesson.level} />
+                {progressMap[lesson.id] && <StatusBadge status={progressMap[lesson.id].status} />}
+              </div>
+              <h3 className="mt-3 text-base font-semibold text-slate-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">{lesson.title}</h3>
+              <p className="mt-1 line-clamp-2 text-sm text-slate-500 dark:text-slate-400">{lesson.description}</p>
+              <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
+                {lesson.duration && <span>{"⏱ " + lesson.duration}</span>}
+                {lesson.topic && <span>{"· " + lesson.topic}</span>}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

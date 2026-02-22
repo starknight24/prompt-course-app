@@ -1,6 +1,5 @@
-// src/hooks/useLessons.js
 import { useState, useEffect } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
 
 export default function useLessons() {
@@ -9,13 +8,22 @@ export default function useLessons() {
 
   useEffect(() => {
     const fetchLessons = async () => {
-      const snapshot = await getDocs(collection(db, "lessons"));
-      const results = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setLessons(results);
-      setLoading(false);
+      try {
+        const lessonsRef = collection(db, "lessons");
+        const q = query(lessonsRef, orderBy("number")); // ✅ sorting applied here
+        const snapshot = await getDocs(q);              // ✅ using the query here
+
+        const results = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setLessons(results);
+      } catch (err) {
+        console.error("❌ Failed to load lessons:", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchLessons();
