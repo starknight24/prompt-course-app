@@ -12,11 +12,11 @@ This is a prompt engineering course platform with:
 
 ### Key Components
 - `src/App.jsx`: Main router with protected routes
-- `src/components/Dashboard.jsx`: Main lesson listing page
-- `src/components/LessonPage.jsx`: Individual lesson viewer
-- `src/hooks/useLessons.js`: Custom hook for fetching lessons from Firestore
+- `src/components/Dashboard.jsx`: Main dashboard with stats and progress
+- `src/components/LessonDetailPage.jsx`: Individual lesson viewer with practice questions
+- `src/api/catalog.js`: API client for fetching lessons/modules from backend
 - `src/context/UserContext.jsx`: Authentication context
-- `scripts/seedLessons.js`: Database seeding script
+- `src/context/ProgressContext.jsx`: Progress and bookmarks context
 
 ### Data Structure
 - Lessons contain: title, description, content, order, createdAt
@@ -41,13 +41,12 @@ npm run lint         # Run ESLint on functions
 ```
 
 ### Database Seeding
-```bash
-node scripts/seedLessons.js    # Seed sample lesson data
-```
+Lesson data is managed through the Admin Dashboard (Bulk Import page) or via the backend API.
+No local seeding scripts are used — all content management goes through the Cloud Functions API.
 
 ## Firebase Configuration
 
-Firebase config is in `src/firebase.js` with project ID `prompt-engineering-course`. The backend API endpoint is at `/admin/lessons` for creating new lessons via POST requests.
+Firebase client config is in `src/firebase.js`, reading all credentials from environment variables (`import.meta.env.VITE_*`). Copy `.env.example` to `.env` and fill in your project values. The backend API endpoint base URL defaults to the deployed Cloud Functions URL and can be overridden via `VITE_API_BASE_URL`.
 
 ## Tech Stack
 - React 19 with React Router

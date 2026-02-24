@@ -116,13 +116,12 @@ Prompt Course App is a Firebase-backed learning platform where authenticated use
 | **Responsibilities** | • Specify codebase, ignore rules, and predeploy lint hook.<br>• Pin Node engine (v22) and declare dependencies (`express`, `cors`, `firebase-admin`, `firebase-functions`).<br>• Provide npm scripts for linting, emulator, logs, deploy. |
 | **Collaborators** | • Firebase CLI workflows.<br>• Local developers running `npm run serve`/`deploy`. |
 
-### 14. Seed Lessons Script
+### 14. Seed Lessons Script *(Removed)*
 | | |
 |---|---|
-| **Class Name** | SeedLessons (`scripts/seedLessons.js`) |
-| **Parent Class** | Node script (ES module) |
-| **Responsibilities** | • Initialize Firebase client SDK with same config as frontend.<br>• Loop through curated lesson objects (including nested `tasks`).<br>• Write lessons to Firestore under deterministic IDs and create subcollection docs for exercises. |
-| **Collaborators** | • Firestore client (`doc`, `setDoc`, `collection`).<br>• Developers bootstrapping environments or refreshing data sets. |
+| **Class Name** | ~~SeedLessons (`scripts/seedLessons.js`)~~ |
+| **Status** | **Deleted** — removed due to hardcoded API key exposure. |
+| **Replacement** | Content seeding is now handled via the Admin Dashboard Bulk Import page or the `POST /v1/admin/bulk-import` API endpoint. |
 
 ### 15. Firestore Data Model
 | | |
@@ -137,7 +136,7 @@ Prompt Course App is a Firebase-backed learning platform where authenticated use
 |---|---|
 | **Class Name** | Tooling Config (`vite.config.js`, `tailwind.config.js`, `eslint.config.js`, Firebase config constants) |
 | **Parent Class** | Configuration files |
-| **Responsibilities** | • Define Vite plugins and build pipeline.<br>• Configure Tailwind content scanning and shared utility classes.<br>• Enforce lint rules (React Hooks plugin, refresh safety).<br>• Supply Firebase credentials (currently inline; should migrate to `.env`). |
+| **Responsibilities** | • Define Vite plugins and build pipeline.<br>• Configure Tailwind content scanning and shared utility classes.<br>• Enforce lint rules (React Hooks plugin, refresh safety).<br>• Supply Firebase credentials via environment variables (`import.meta.env.VITE_*` loaded from `.env`). |
 | **Collaborators** | • Frontend build process (`npm run dev/build`).<br>• Components relying on Tailwind classes or lint feedback.<br>• Firebase initialization modules. |
 
 ---
@@ -154,8 +153,8 @@ Prompt Course App is a Firebase-backed learning platform where authenticated use
    `LessonPage` fetches the targeted lesson plus tasks, displays the content, and records MCQ attempts back to Firestore. The UI shows optimistic feedback plus syncing/error states.
 
 4. **Admin Content Lifecycle**  
-   - During development or initial deployment, run `node scripts/seedLessons.js` to load canonical content.  
-   - Operational teams can POST to the Cloud Function `/admin/lessons` endpoint to add modules and use `/lessons` for audits or dashboards.
+   - Content is managed through the Admin Dashboard (modules, lessons, questions CRUD) or via the `POST /v1/admin/bulk-import` endpoint.  
+   - Operational teams can use the admin API endpoints for audits or dashboards.
 
 5. **Future Hardening**  
    Implement Firestore security rules, restrict admin endpoints, reconcile `order` vs `number` fields, and consider App Check / environment-driven configs for production readiness.

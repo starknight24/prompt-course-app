@@ -100,6 +100,14 @@ export default function App() {
                 </PrivateRoute>
               }
             />
+            <Route
+              path="admin/analytics"
+              element={
+                <PrivateRoute requireAdmin>
+                  <AdminDashboard />
+                </PrivateRoute>
+              }
+            />
           </Route>
 
           {/* Catch all */}

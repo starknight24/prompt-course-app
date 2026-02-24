@@ -3,13 +3,13 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBVl9j_Z2L8aoHPB3LKhoY5r3YAA1PFU6k",
-  authDomain: "prompt-engineering-course.firebaseapp.com",
-  projectId: "prompt-engineering-course",
-  storageBucket: "prompt-engineering-course.appspot.com",
-  messagingSenderId: "867680250236",
-  appId: "1:867680250236:web:97526c15b58482abe2dcf9",
-  measurementId: "G-B10ZEPBXP3"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 const app = initializeApp(firebaseConfig);

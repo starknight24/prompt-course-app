@@ -8,6 +8,7 @@ const express = require("express");
 const admin = require("firebase-admin");
 const authenticate = require("../middleware/authenticate");
 const validate = require("../middleware/validate");
+const config = require("../config");
 
 const router = express.Router();
 const db = admin.firestore();

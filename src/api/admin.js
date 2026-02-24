@@ -49,7 +49,7 @@ export const publishLesson = (lessonId, published) =>
 
 /* ── Bulk import ─────────────────────────────────── */
 
-export const bulkImport = (collection, data) =>
+export const bulkImport = ({ collection, data }) =>
   apiRequest("/admin/bulk-import", {
     method: "POST",
     body: { collection, data },

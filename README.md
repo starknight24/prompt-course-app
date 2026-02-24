@@ -22,7 +22,7 @@ Built with a modern full-stack architecture using **React**, **Firebase**, **Tai
 ### Backend:
 - **Firebase Functions** (Express API)
 - **Firebase Firestore** (NoSQL DB)
-- **Admin SDK** to securely seed lessons
+- **Admin SDK** for protected backend operations
 - **Protected endpoints** for admin-only operations
 
 ---
@@ -32,7 +32,7 @@ Built with a modern full-stack architecture using **React**, **Firebase**, **Tai
 - 📚 **Curated Lessons**: Bite-sized theory + hands-on prompt design
 - 🧠 **User Progress Tracking**: Tracks streaks, completion, and in-progress lessons
 - 🔐 **Authentication**: User login via email/password (Google Auth coming soon)
-- 🧰 **Admin Dashboard** *(in progress)*: Easily seed new lessons into Firestore
+- 🧰 **Admin Dashboard**: Manage modules, lessons, questions, and bulk import content
 - 📈 **Learning Paths**: Dynamic milestones and progression logic (Strategy Lab, etc.)
 - ⚡ **Serverless Backend**: Powered by Firebase Cloud Functions and Firestore
 
