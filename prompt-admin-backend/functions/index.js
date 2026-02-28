@@ -38,6 +38,7 @@ const progressRoutes = require("./routes/progress");
 const searchRoutes = require("./routes/search");
 const feedbackRoutes = require("./routes/feedback");
 const adminRoutes = require("./routes/admin");
+const roadmapRoutes = require("./routes/roadmap");
 
 // Auth & Profile
 app.use("/v1/auth", authRoutes);
@@ -59,6 +60,9 @@ app.use("/v1", feedbackRoutes);
 
 // Admin (protected)
 app.use("/v1/admin", adminRoutes);
+
+// Roadmap
+app.use("/v1", roadmapRoutes);
 
 // ── 404 catch-all ──
 app.all("*", (req, res) => {

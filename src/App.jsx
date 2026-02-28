@@ -18,6 +18,7 @@ import LessonListPage from "./components/LessonListPage";
 import LessonDetailPage from "./components/LessonDetailPage";
 import BookmarksPage from "./components/BookmarksPage";
 import SearchPage from "./components/SearchPage";
+import RoadmapPage from "./components/RoadmapPage";
 
 // Admin pages
 import AdminDashboard from "./components/admin/AdminDashboard";
@@ -58,6 +59,7 @@ export default function App() {
             <Route path="lessons/:lessonId" element={<LessonDetailPage />} />
             <Route path="bookmarks" element={<BookmarksPage />} />
             <Route path="search" element={<SearchPage />} />
+            <Route path="roadmap" element={<RoadmapPage />} />
 
             {/* Admin routes */}
             <Route

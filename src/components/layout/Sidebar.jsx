@@ -10,10 +10,12 @@ import {
   Cog6ToothIcon,
   XMarkIcon,
   ChartBarIcon,
+  MapIcon,
 } from "@heroicons/react/24/outline";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: HomeIcon },
+  { to: "/roadmap", label: "Roadmap", icon: MapIcon },
   { to: "/modules", label: "Modules", icon: Square3Stack3DIcon },
   { to: "/lessons", label: "Lessons", icon: BookOpenIcon },
   { to: "/bookmarks", label: "Bookmarks", icon: BookmarkIcon },
