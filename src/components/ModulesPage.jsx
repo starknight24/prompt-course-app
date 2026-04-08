@@ -6,8 +6,7 @@ import LoadingSpinner from "./ui/LoadingSpinner";
 import EmptyState from "./ui/EmptyState";
 import Pagination from "./ui/Pagination";
 import { FunnelIcon } from "@heroicons/react/24/outline";
-
-const LEVELS = ["all", "beginner", "intermediate", "advanced"];
+import { LEVELS } from "../constants/levels";
 
 export default function ModulesPage() {
   const [searchParams, setSearchParams] = useSearchParams();

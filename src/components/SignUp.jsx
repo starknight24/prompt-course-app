@@ -1,6 +1,29 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { signUp } from "../firebaseAuth";
 import { useNavigate, Link } from "react-router-dom";
+
+const PASSWORD_REQUIREMENTS = [
+  { key: "length", label: "At least 8 characters", test: (pw) => pw.length >= 8 },
+  { key: "uppercase", label: "One uppercase letter", test: (pw) => /[A-Z]/.test(pw) },
+  { key: "lowercase", label: "One lowercase letter", test: (pw) => /[a-z]/.test(pw) },
+  { key: "number", label: "One number", test: (pw) => /[0-9]/.test(pw) },
+  { key: "special", label: "One special character", test: (pw) => /[^A-Za-z0-9]/.test(pw) },
+];
+
+function getStrength(password) {
+  if (!password) return { level: "none", score: 0 };
+  const passed = PASSWORD_REQUIREMENTS.filter((r) => r.test(password)).length;
+  if (passed <= 2) return { level: "weak", score: passed };
+  if (passed <= 4) return { level: "medium", score: passed };
+  return { level: "strong", score: passed };
+}
+
+const STRENGTH_CONFIG = {
+  none: { width: "0%", color: "bg-slate-700", text: "", textColor: "" },
+  weak: { width: "33%", color: "bg-red-500", text: "Weak", textColor: "text-red-400" },
+  medium: { width: "66%", color: "bg-amber-500", text: "Medium", textColor: "text-amber-400" },
+  strong: { width: "100%", color: "bg-emerald-500", text: "Strong", textColor: "text-emerald-400" },
+};
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
@@ -9,9 +32,18 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const strength = useMemo(() => getStrength(password), [password]);
+  const allRequirementsMet = PASSWORD_REQUIREMENTS.every((r) => r.test(password));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!allRequirementsMet) {
+      setError("Please meet all password requirements before continuing.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -103,6 +135,49 @@ export default function SignUp() {
                       required
                       className="input-field rounded-xl border border-slate-700/60 bg-slate-900/60 text-white placeholder-slate-500/70 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-400/40"
                     />
+
+                    {password && (
+                      <div className="space-y-3 pt-1">
+                        {/* Strength bar */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-slate-400">Password strength</span>
+                            <span className={`text-xs font-medium ${STRENGTH_CONFIG[strength.level].textColor}`}>
+                              {STRENGTH_CONFIG[strength.level].text}
+                            </span>
+                          </div>
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                            <div
+                              className={`h-full rounded-full transition-all duration-300 ${STRENGTH_CONFIG[strength.level].color}`}
+                              style={{ width: STRENGTH_CONFIG[strength.level].width }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Requirements checklist */}
+                        <ul className="grid gap-1.5 text-xs">
+                          {PASSWORD_REQUIREMENTS.map((req) => {
+                            const met = req.test(password);
+                            return (
+                              <li key={req.key} className="flex items-center gap-2">
+                                <span
+                                  className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] transition-colors duration-200 ${
+                                    met
+                                      ? "bg-emerald-500/20 text-emerald-400"
+                                      : "bg-slate-800 text-slate-500"
+                                  }`}
+                                >
+                                  {met ? "✓" : "·"}
+                                </span>
+                                <span className={met ? "text-slate-300" : "text-slate-500"}>
+                                  {req.label}
+                                </span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </div>
 

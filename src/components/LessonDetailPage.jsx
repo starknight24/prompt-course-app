@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import DOMPurify from "dompurify";
 import toast from "react-hot-toast";
 import { getLesson } from "../api/catalog";
 import { submitResponse } from "../api/practice";
@@ -24,7 +25,12 @@ export default function LessonDetailPage() {
         const data = await getLesson(lessonId);
         setLesson(data);
         // Mark as in-progress
-        try { await saveProgress(lessonId, "in_progress", 0); } catch {}
+        try {
+          await saveProgress(lessonId, "in_progress", 0);
+        } catch (progressErr) {
+          console.warn("Failed to save initial progress:", progressErr);
+          toast.error("Could not save your progress. Changes may not be recorded.");
+        }
       } catch (err) {
         console.error("Lesson load error:", err);
       } finally {
@@ -121,7 +127,7 @@ export default function LessonDetailPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
           <div
             className="prose prose-slate max-w-none dark:prose-invert prose-headings:text-slate-900 dark:prose-headings:text-white prose-p:text-slate-600 dark:prose-p:text-slate-300"
-            dangerouslySetInnerHTML={{ __html: lesson.content }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(lesson.content) }}
           />
         </div>
       )}

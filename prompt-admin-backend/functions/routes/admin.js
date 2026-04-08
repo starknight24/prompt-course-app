@@ -22,6 +22,14 @@ const admin = require("firebase-admin");
 const authenticate = require("../middleware/authenticate");
 const requireAdmin = require("../middleware/requireAdmin");
 const validate = require("../middleware/validate");
+const { VALID_LEVELS } = require("../constants/levels");
+
+const {
+  indexModule,
+  indexLesson,
+  removeModule,
+  removeLesson,
+} = require("../services/algolia");
 
 const router = express.Router();
 const db = admin.firestore();
@@ -59,10 +67,9 @@ router.post("/modules", validate(["title", "description", "level"]), async (req,
   try {
     const { title, description, level, tags } = req.body;
 
-    const validLevels = ["beginner", "intermediate", "advanced"];
-    if (!validLevels.includes(level.toLowerCase())) {
+    if (!VALID_LEVELS.includes(level.toLowerCase())) {
       return res.status(400).json({
-        error: `Invalid level. Must be one of: ${validLevels.join(", ")}`,
+        error: `Invalid level. Must be one of: ${VALID_LEVELS.join(", ")}`,
       });
     }
 
@@ -75,6 +82,15 @@ router.post("/modules", validate(["title", "description", "level"]), async (req,
       createdAt: now,
       updatedAt: now,
     });
+
+    // Fire-and-forget: index in Algolia
+    indexModule({
+      id: docRef.id,
+      title,
+      description,
+      level: level.toLowerCase(),
+      tags: tags || [],
+    }).catch(() => {});
 
     return res.status(201).json({
       id: docRef.id,
@@ -113,10 +129,9 @@ router.put("/modules/:moduleId", async (req, res) => {
     }
 
     if (updates.level) {
-      const validLevels = ["beginner", "intermediate", "advanced"];
-      if (!validLevels.includes(updates.level.toLowerCase())) {
+      if (!VALID_LEVELS.includes(updates.level.toLowerCase())) {
         return res.status(400).json({
-          error: `Invalid level. Must be one of: ${validLevels.join(", ")}`,
+          error: `Invalid level. Must be one of: ${VALID_LEVELS.join(", ")}`,
         });
       }
       updates.level = updates.level.toLowerCase();
@@ -128,6 +143,17 @@ router.put("/modules/:moduleId", async (req, res) => {
 
     updates.updatedAt = admin.firestore.FieldValue.serverTimestamp();
     await docRef.update(updates);
+
+    // Fire-and-forget: re-index in Algolia with merged data
+    const updatedDoc = await docRef.get();
+    const moduleData = updatedDoc.data();
+    indexModule({
+      id: moduleId,
+      title: moduleData.title,
+      description: moduleData.description,
+      level: moduleData.level,
+      tags: moduleData.tags || [],
+    }).catch(() => {});
 
     return res.status(200).json({ message: "Module updated.", id: moduleId });
   } catch (err) {
@@ -153,6 +179,10 @@ router.delete("/modules/:moduleId", async (req, res) => {
     }
 
     await docRef.delete();
+
+    // Fire-and-forget: remove from Algolia
+    removeModule(moduleId).catch(() => {});
+
     return res.status(200).json({ message: "Module deleted.", id: moduleId });
   } catch (err) {
     console.error("DELETE /v1/admin/modules/:moduleId error:", err);
@@ -203,6 +233,21 @@ router.post("/lessons", validate(["title", "content"]), async (req, res) => {
       createdAt: now,
       updatedAt: now,
     });
+
+    // Fire-and-forget: index in Algolia
+    indexLesson({
+      id: docRef.id,
+      moduleId: moduleId || null,
+      title,
+      content,
+      description: description || "",
+      level: level ? level.toLowerCase() : "beginner",
+      tags: tags || [],
+      published: typeof published === "boolean" ? published : false,
+      order: order || 0,
+      topic: topic || "",
+      duration: duration || "",
+    }).catch(() => {});
 
     return res.status(201).json({ id: docRef.id, message: "Lesson created." });
   } catch (err) {
@@ -259,6 +304,23 @@ router.put("/lessons/:lessonId", async (req, res) => {
     updates.updatedAt = admin.firestore.FieldValue.serverTimestamp();
     await docRef.update(updates);
 
+    // Fire-and-forget: re-index in Algolia with merged data
+    const updatedDoc = await docRef.get();
+    const lessonData = updatedDoc.data();
+    indexLesson({
+      id: lessonId,
+      moduleId: lessonData.moduleId,
+      title: lessonData.title,
+      content: lessonData.content,
+      description: lessonData.description || "",
+      level: lessonData.level,
+      tags: lessonData.tags || [],
+      published: lessonData.published,
+      order: lessonData.order,
+      topic: lessonData.topic || "",
+      duration: lessonData.duration || "",
+    }).catch(() => {});
+
     return res.status(200).json({ message: "Lesson updated.", id: lessonId });
   } catch (err) {
     console.error("PUT /v1/admin/lessons/:lessonId error:", err);
@@ -292,6 +354,9 @@ router.delete("/lessons/:lessonId", async (req, res) => {
     batch.delete(docRef);
     questionsSnap.forEach((qDoc) => batch.delete(qDoc.ref));
     await batch.commit();
+
+    // Fire-and-forget: remove from Algolia
+    removeLesson(lessonId).catch(() => {});
 
     return res.status(200).json({ message: "Lesson deleted.", id: lessonId });
   } catch (err) {
