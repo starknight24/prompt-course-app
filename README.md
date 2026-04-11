@@ -66,29 +66,29 @@ The platform features:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        Frontend                              │
-│   React 19 + Vite + Tailwind CSS + React Router              │
-│                                                              │
+│                        Frontend                             │
+│   React 19 + Vite + Tailwind CSS + React Router             │
+│                                                             │
 │   ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
-│   │ Dashboard │  │ Lessons  │  │ Roadmap  │  │  Admin   │    │
+│   │ Dashboard│  │ Lessons  │  │ Roadmap  │  │  Admin   │    │
 │   └──────────┘  └──────────┘  └──────────┘  └──────────┘    │
-│         │              │             │             │          │
-│         └──────────────┴─────────────┴─────────────┘         │
-│                         │                                     │
-│                    API Client                                 │
-│              (Firebase Auth tokens)                           │
+│         │              │             │             │        │
+│         └──────────────┴─────────────┴─────────────┘        │
+│                         │                                   │
+│                    API Client                               │
+│              (Firebase Auth tokens)                         │
 └─────────────────────────┬───────────────────────────────────┘
                           │ HTTPS
 ┌─────────────────────────┴───────────────────────────────────┐
-│                    Backend (Cloud Functions)                  │
-│              Express.js API on Firebase Functions             │
-│                                                              │
-│   ┌──────┐ ┌────────┐ ┌──────────┐ ┌────────┐ ┌──────────┐ │
+│                    Backend (Cloud Functions)                │
+│              Express.js API on Firebase Functions           │
+│                                                             │
+│   ┌──────┐ ┌────────┐ ┌──────────┐ ┌────────┐ ┌──────────┐  │
 │   │ Auth │ │Catalog │ │Practice  │ │Progress│ │  Admin   │  │
 │   └──────┘ └────────┘ └──────────┘ └────────┘ └──────────┘  │
-│                │            │                        │        │
-│         ┌──────┴────────────┴────────────────────────┘       │
-│         │                                                     │
+│                │            │                        │      │
+│         ┌──────┴────────────┴────────────────────────┘      │
+│         │                                                   │
 │   ┌─────┴─────┐    ┌──────────┐    ┌──────────┐             │
 │   │ Firestore │    │  OpenAI  │    │ Algolia  │             │
 │   │   (DB)    │    │  (LLM)   │    │ (Search) │             │
