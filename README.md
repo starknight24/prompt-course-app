@@ -2,7 +2,7 @@
 
 An interactive web-based learning platform that teaches **prompt engineering** for large language models (LLMs) like ChatGPT, Claude, and Gemini. Inspired by the Duolingo learning experience, PromptCraft delivers curated lessons, AI-powered feedback, practice questions, and progress tracking to help users write sharper, more effective prompts.
 
-**Live app: (Coming soon)** [https://prompt-engineering-course.web.app](https://prompt-engineering-course.web.app)
+**Live app:** [https://prompt-engineering-course.web.app](https://prompt-engineering-course.web.app) **(Coming soon)**
 
 ---
 
