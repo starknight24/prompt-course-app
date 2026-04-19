@@ -2,7 +2,7 @@
 
 An interactive web-based learning platform that teaches **prompt engineering** for large language models (LLMs) like ChatGPT, Claude, and Gemini. Inspired by the Duolingo learning experience, PromptCraft delivers curated lessons, AI-powered feedback, practice questions, and progress tracking to help users write sharper, more effective prompts.
 
-**Live app:** [https://prompt-engineering-course.web.app](https://prompt-engineering-course.web.app)
+**Live app:** [https://prompt-engineering-course.web.app](https://prompt-engineering-course.web.app) **(Coming soon)**
 
 ---
 
@@ -66,29 +66,29 @@ The platform features:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        Frontend                              │
-│   React 19 + Vite + Tailwind CSS + React Router              │
-│                                                              │
+│                        Frontend                             │
+│   React 19 + Vite + Tailwind CSS + React Router             │
+│                                                             │
 │   ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
-│   │ Dashboard │  │ Lessons  │  │ Roadmap  │  │  Admin   │    │
+│   │ Dashboard│  │ Lessons  │  │ Roadmap  │  │  Admin   │    │
 │   └──────────┘  └──────────┘  └──────────┘  └──────────┘    │
-│         │              │             │             │          │
-│         └──────────────┴─────────────┴─────────────┘         │
-│                         │                                     │
-│                    API Client                                 │
-│              (Firebase Auth tokens)                           │
+│         │              │             │             │        │
+│         └──────────────┴─────────────┴─────────────┘        │
+│                         │                                   │
+│                    API Client                               │
+│              (Firebase Auth tokens)                         │
 └─────────────────────────┬───────────────────────────────────┘
                           │ HTTPS
 ┌─────────────────────────┴───────────────────────────────────┐
-│                    Backend (Cloud Functions)                  │
-│              Express.js API on Firebase Functions             │
-│                                                              │
-│   ┌──────┐ ┌────────┐ ┌──────────┐ ┌────────┐ ┌──────────┐ │
+│                    Backend (Cloud Functions)                │
+│              Express.js API on Firebase Functions           │
+│                                                             │
+│   ┌──────┐ ┌────────┐ ┌──────────┐ ┌────────┐ ┌──────────┐  │
 │   │ Auth │ │Catalog │ │Practice  │ │Progress│ │  Admin   │  │
 │   └──────┘ └────────┘ └──────────┘ └────────┘ └──────────┘  │
-│                │            │                        │        │
-│         ┌──────┴────────────┴────────────────────────┘       │
-│         │                                                     │
+│                │            │                        │      │
+│         ┌──────┴────────────┴────────────────────────┘      │
+│         │                                                   │
 │   ┌─────┴─────┐    ┌──────────┐    ┌──────────┐             │
 │   │ Firestore │    │  OpenAI  │    │ Algolia  │             │
 │   │   (DB)    │    │  (LLM)   │    │ (Search) │             │
@@ -442,49 +442,6 @@ All endpoints are prefixed with `/v1` and served from Firebase Cloud Functions.
 | `POST` | `/v1/admin/bulk-import` | Bulk import content |
 | `POST` | `/v1/admin/publish-lesson` | Toggle lesson publish status |
 | `GET` | `/v1/admin/analytics/engagement` | Get engagement metrics |
-
----
-
-## Building with AI
-
-### Describe the project built using AI
-
-PromptCraft was developed collaboratively with **Claude Code (Claude Opus 4)** acting as an AI pair programmer throughout the entire development lifecycle. Claude assisted with:
-
-- **Architecture design** — Defining the data model, API structure, and component hierarchy
-- **Feature implementation** — Writing React components, Express routes, Firebase integrations, and third-party service integrations (OpenAI, Algolia)
-- **Security hardening** — Identifying XSS vulnerabilities, writing Firestore security rules, adding input sanitization, and implementing authentication middleware
-- **Code quality** — Deduplicating constants, adding retry logic, caching admin checks, fixing lint errors, and improving error handling
-- **Content creation** — Generating the full 18-lesson prompt engineering curriculum with 54 practice questions
-- **Testing and debugging** — Running the app locally, visually inspecting pages via browser automation, identifying blank-screen issues, and verifying error handling
-
-The AI did not simply generate boilerplate code. It performed iterative code review, identified gaps (like the hardcoded streak value, missing HTML sanitization, and in-memory search scalability), and systematically addressed each one — often running multiple tasks in parallel for efficiency.
-
-### What problem were you trying to solve?
-
-Prompt engineering is a critical skill in the age of LLMs, but most learning resources are scattered across blog posts, YouTube videos, and documentation. There is no structured, interactive platform that teaches prompt engineering the way Duolingo teaches languages — with progressive modules, practice exercises, immediate feedback, and progress tracking.
-
-PromptCraft solves this by providing:
-1. **A structured curriculum** — Not just tips, but a complete learning path from fundamentals to production-grade prompt optimization
-2. **Active learning** — Practice questions after every lesson, not just passive reading
-3. **AI-powered feedback** — Instead of binary right/wrong answers, students get nuanced hints, rubric evaluations, and improvement suggestions from an LLM
-4. **Motivation through progress** — Streaks, completion tracking, bookmarks, and a visual roadmap keep learners engaged
-
-### What approach did you take to solve it?
-
-The development followed a **modern full-stack serverless architecture**:
-
-1. **Frontend-first design** — Built the UI with React and Tailwind CSS, focusing on the learner experience: clean navigation, dark mode support, responsive layout, and intuitive progress indicators
-
-2. **Serverless backend** — Used Firebase Cloud Functions with Express.js to avoid managing servers. Every API endpoint is stateless and scales automatically. Firestore provides a flexible document database that maps naturally to the course content hierarchy (modules > lessons > questions)
-
-3. **Security by default** — Firebase Authentication handles user identity, every API endpoint verifies ID tokens, Firestore security rules enforce data access at the database level, and DOMPurify prevents XSS from lesson content
-
-4. **AI integration** — OpenAI's gpt-4o-mini powers the practice feedback system. Rather than just marking answers right or wrong, students can request hints (without spoilers), rubric evaluations, or specific improvement suggestions. The integration includes graceful fallback to template responses if the API is unavailable
-
-5. **Scalable search** — Replaced an initial in-memory Firestore search (which loaded 200 docs and filtered client-side) with Algolia, providing instant full-text search with typo tolerance across all modules and lessons
-
-6. **Iterative hardening with AI** — Used Claude Code to systematically audit the codebase for security gaps, performance issues, code duplication, and missing error handling, then fix all identified issues in parallel
 
 ---
 
