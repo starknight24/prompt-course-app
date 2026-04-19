@@ -14,6 +14,110 @@ const validate = require("../middleware/validate");
 const router = express.Router();
 const db = admin.firestore();
 
+/* ------------------------------------------------------------------ */
+/*  Helper: calculate streak (consecutive days of activity)            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Returns the number of consecutive days (up to and including today)
+ * that the user had activity in either the `progress` or `responses`
+ * collection. We query only the `updatedAt` / `createdAt` fields and
+ * limit to 90 docs per collection to keep reads bounded.
+ * @param {string} uid - The user ID to calculate streak for.
+ * @return {Promise<number>} The streak count in days.
+ */
+async function calculateStreak(uid) {
+  // Fetch recent activity timestamps from both collections in parallel.
+  // Order descending so the most recent activity comes first; limit to
+  // 90 per collection (~3 months of daily activity is more than enough).
+  const [progressSnap, responsesSnap] = await Promise.all([
+    db
+      .collection("progress")
+      .where("userId", "==", uid)
+      .orderBy("updatedAt", "desc")
+      .limit(90)
+      .select("updatedAt")
+      .get(),
+    db
+      .collection("responses")
+      .where("userId", "==", uid)
+      .orderBy("createdAt", "desc")
+      .limit(90)
+      .select("createdAt")
+      .get(),
+  ]);
+
+  // Collect all activity dates as "YYYY-MM-DD" strings (UTC).
+  const dateSet = new Set();
+
+  progressSnap.forEach((doc) => {
+    const ts = doc.data().updatedAt;
+    if (ts && typeof ts.toDate === "function") {
+      dateSet.add(ts.toDate().toISOString().slice(0, 10));
+    }
+  });
+
+  responsesSnap.forEach((doc) => {
+    const ts = doc.data().createdAt;
+    if (ts && typeof ts.toDate === "function") {
+      dateSet.add(ts.toDate().toISOString().slice(0, 10));
+    }
+  });
+
+  if (dateSet.size === 0) return 0;
+
+  // Walk backwards from today counting consecutive days.
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+
+  // The streak must include today or yesterday (to be forgiving across
+  // timezones — if the user was active yesterday but not yet today the
+  // streak should still count).
+  if (!dateSet.has(todayStr)) {
+    const yesterday = new Date(now);
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    const yesterdayStr = yesterday.toISOString().slice(0, 10);
+    if (!dateSet.has(yesterdayStr)) {
+      return 0; // no recent activity — streak is broken
+    }
+  }
+
+  // Count consecutive days backwards starting from today.
+  let streak = 0;
+  const cursor = new Date(now);
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const key = cursor.toISOString().slice(0, 10);
+    if (dateSet.has(key)) {
+      streak++;
+      cursor.setUTCDate(cursor.getUTCDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  // If the streak didn't start today (i.e. user hasn't been active today
+  // but was active yesterday), we started counting from today which would
+  // have been a miss. Re-count from yesterday instead.
+  if (streak === 0) {
+    const yesterday = new Date(now);
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    const cur = new Date(yesterday);
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const key = cur.toISOString().slice(0, 10);
+      if (dateSet.has(key)) {
+        streak++;
+        cur.setUTCDate(cur.getUTCDate() - 1);
+      } else {
+        break;
+      }
+    }
+  }
+
+  return streak;
+}
+
 /**
  * POST /v1/save-progress
  *
@@ -129,15 +233,15 @@ router.get("/user-progress", authenticate, async (req, res) => {
  *   "userCompleted": 4,
  *   "userInProgress": 2,
  *   "userBookmarks": 3,
- *   "streakDays": 0
+ *   "streakDays": 5
  * }
  */
 router.get("/stats/overview", authenticate, async (req, res) => {
   try {
     const uid = req.user.uid;
 
-    // Parallel counts
-    const [modulesCount, lessonsCount, questionsCount, progressSnap, bookmarkSnap] =
+    // Parallel counts (including streak calculation)
+    const [modulesCount, lessonsCount, questionsCount, progressSnap, bookmarkSnap, streakDays] =
       await Promise.all([
         db.collection("modules").count().get(),
         db.collection("lessons").count().get(),
@@ -148,6 +252,7 @@ router.get("/stats/overview", authenticate, async (req, res) => {
           .where("userId", "==", uid)
           .where("bookmarked", "==", true)
           .get(),
+        calculateStreak(uid),
       ]);
 
     let completed = 0;
@@ -165,7 +270,7 @@ router.get("/stats/overview", authenticate, async (req, res) => {
       userCompleted: completed,
       userInProgress: inProgress,
       userBookmarks: bookmarkSnap.size,
-      streakDays: 0, // placeholder — implement streak logic as needed
+      streakDays,
     });
   } catch (err) {
     console.error("GET /v1/stats/overview error:", err);

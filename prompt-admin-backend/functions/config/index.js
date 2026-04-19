@@ -51,6 +51,19 @@ const config = {
   },
 
   /**
+   * Algolia Search Configuration
+   * Add your Algolia credentials to .env:
+   *   ALGOLIA_APP_ID=...
+   *   ALGOLIA_ADMIN_API_KEY=...
+   *   ALGOLIA_SEARCH_API_KEY=...
+   */
+  algolia: {
+    appId: process.env.ALGOLIA_APP_ID || "",
+    adminKey: process.env.ALGOLIA_ADMIN_API_KEY || "",
+    searchKey: process.env.ALGOLIA_SEARCH_API_KEY || "",
+  },
+
+  /**
    * Additional API Keys (add as needed)
    * Example:
    *   stripe: {

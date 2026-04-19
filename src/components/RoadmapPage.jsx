@@ -22,10 +22,9 @@ import {
   MapIcon,
 } from "@heroicons/react/24/outline";
 import { CheckCircleIcon as CheckCircleSolid } from "@heroicons/react/24/solid";
+import { LEVEL_ORDER } from "../constants/levels";
 
 /* ── helpers ──────────────────────────────────────────────────────── */
-
-const LEVEL_ORDER = { beginner: 0, intermediate: 1, advanced: 2 };
 
 function computeModuleProgress(module, progressMap) {
   const lessons = module.lessons || [];

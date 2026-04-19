@@ -20,6 +20,30 @@ async function getIdToken() {
 }
 
 /**
+ * Check whether a failed request should be retried.
+ * Only retry GET requests that failed due to network errors or 5xx status.
+ */
+function isRetryable(method, error) {
+  // Only retry GET requests
+  if (method && method.toUpperCase() !== "GET") return false;
+  // Network error (no status means fetch itself failed)
+  if (!error.status) return true;
+  // 5xx server errors
+  if (error.status >= 500) return true;
+  return false;
+}
+
+/**
+ * Sleep for a given number of milliseconds.
+ */
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const MAX_RETRIES = 2;
+const BASE_DELAY_MS = 500;
+
+/**
  * Generic fetch wrapper.
  *
  * @param {string}  endpoint  — path relative to API_BASE, e.g. "/modules"
@@ -48,25 +72,43 @@ export async function apiRequest(endpoint, options = {}) {
   const fetchOptions = { ...rest, headers };
   if (body) fetchOptions.body = JSON.stringify(body);
 
-  const res = await fetch(url, fetchOptions);
+  const method = fetchOptions.method || "GET";
+  let lastError;
 
-  // Try to parse JSON regardless of status
-  let data;
-  try {
-    data = await res.json();
-  } catch {
-    data = null;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const res = await fetch(url, fetchOptions);
+
+      // Try to parse JSON regardless of status
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
+
+      if (!res.ok) {
+        const message = data?.error || `Request failed (${res.status})`;
+        const err = new Error(message);
+        err.status = res.status;
+        err.data = data;
+        throw err;
+      }
+
+      return data;
+    } catch (err) {
+      lastError = err;
+      if (attempt < MAX_RETRIES && isRetryable(method, err)) {
+        const delay = BASE_DELAY_MS * Math.pow(2, attempt);
+        await sleep(delay);
+        continue;
+      }
+      throw err;
+    }
   }
 
-  if (!res.ok) {
-    const message = data?.error || `Request failed (${res.status})`;
-    const err = new Error(message);
-    err.status = res.status;
-    err.data = data;
-    throw err;
-  }
-
-  return data;
+  // Should not be reached, but just in case
+  throw lastError;
 }
 
 export default apiRequest;

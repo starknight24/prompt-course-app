@@ -9,8 +9,7 @@ import Pagination from "./ui/Pagination";
 import { BookmarkIcon as BookmarkSolid } from "@heroicons/react/24/solid";
 import { BookmarkIcon, FunnelIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
-
-const LEVELS = ["all", "beginner", "intermediate", "advanced"];
+import { LEVELS } from "../constants/levels";
 
 export default function LessonListPage() {
   const [searchParams, setSearchParams] = useSearchParams();

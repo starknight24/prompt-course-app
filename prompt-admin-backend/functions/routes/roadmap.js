@@ -31,10 +31,10 @@
 const express = require("express");
 const admin = require("firebase-admin");
 
+const { LEVEL_ORDER } = require("../constants/levels");
+
 const router = express.Router();
 const db = admin.firestore();
-
-const LEVEL_ORDER = { beginner: 0, intermediate: 1, advanced: 2 };
 
 router.get("/roadmap", async (_req, res) => {
   try {
